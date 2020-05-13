@@ -1,6 +1,9 @@
 package users
 
-import "github.com/vermaarun/bookstore_users-api/utils/errors"
+import (
+	"github.com/vermaarun/bookstore_users-api/utils/date_time"
+	"github.com/vermaarun/bookstore_users-api/utils/errors"
+)
 
 var (
 	usersDb = make(map[int64]*User)
@@ -8,7 +11,7 @@ var (
 
 func GetAll() []User {
 	var userList []User
-	for _, user := range usersDb{
+	for _, user := range usersDb {
 		userList = append(userList, User{
 			Id:         user.Id,
 			FirstName:  user.FirstName,
@@ -43,6 +46,9 @@ func (user *User) Save() *errors.RestError {
 		}
 		return errors.NewBadRequestError("User already Exist.")
 	}
+
+	user.DateCreate = date_time.GetNowString()
+
 	usersDb[user.Id] = user
 	return nil
 }
