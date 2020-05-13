@@ -6,9 +6,25 @@ import (
 	"github.com/vermaarun/bookstore_users-api/services"
 	"github.com/vermaarun/bookstore_users-api/utils/errors"
 	"net/http"
+	"strconv"
 )
 
-func GetUser(c *gin.Context) {}
+func GetUser(c *gin.Context) {
+	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+	if userErr != nil {
+		err := errors.NewBadRequestError("user id must be number.")
+		c.JSON(err.Status, err)
+		return
+	}
+	user, getErr := services.GetUser(userId)
+	if getErr != nil {
+		// TODO: handle save error
+		c.JSON(getErr.Status, getErr)
+		return
+	}
+	c.JSON(http.StatusOK, user)
+
+}
 
 func GetAllUser(c *gin.Context) {}
 
