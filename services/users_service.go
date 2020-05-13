@@ -23,3 +23,7 @@ func GetUser(userId int64) (*users.User, *errors.RestError) {
 	}
 	return user, nil
 }
+
+func GetAllUser() []users.User {
+	return users.GetAll()
+}

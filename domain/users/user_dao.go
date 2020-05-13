@@ -6,6 +6,20 @@ var (
 	usersDb = make(map[int64]*User)
 )
 
+func GetAll() []User {
+	var userList []User
+	for _, user := range usersDb{
+		userList = append(userList, User{
+			Id:         user.Id,
+			FirstName:  user.FirstName,
+			LastName:   user.LastName,
+			Email:      user.Email,
+			DateCreate: user.DateCreate,
+		})
+	}
+	return userList
+}
+
 func (user *User) Get() *errors.RestError {
 	result := usersDb[user.Id]
 	if result == nil {

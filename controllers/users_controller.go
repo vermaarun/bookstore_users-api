@@ -26,7 +26,10 @@ func GetUser(c *gin.Context) {
 
 }
 
-func GetAllUser(c *gin.Context) {}
+func GetAllUser(c *gin.Context) {
+	users := services.GetAllUser()
+	c.JSON(http.StatusOK, users)
+}
 
 func CreateUser(c *gin.Context) {
 	var user users.User
