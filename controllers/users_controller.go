@@ -31,6 +31,33 @@ func GetAllUser(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
+func UpdateUser(c *gin.Context) {
+	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+	if userErr != nil {
+		err := errors.NewBadRequestError("user id must be number.")
+		c.JSON(err.Status, err)
+		return
+	}
+
+	var user users.User
+	if err := c.ShouldBindJSON(&user); err != nil {
+		// TODO: handle json error
+		restErr := errors.NewBadRequestError("invalid json body")
+		c.JSON(restErr.Status, restErr)
+		return
+	}
+	user.Id = userId
+	isPartial := c.Request.Method == http.MethodPatch
+	result, updateErr := services.UpdateUser(isPartial, user)
+	if updateErr != nil {
+		// TODO: handle update error
+		c.JSON(updateErr.Status, updateErr)
+		return
+	}
+	c.JSON(http.StatusCreated, result)
+
+}
+
 func CreateUser(c *gin.Context) {
 	var user users.User
 
