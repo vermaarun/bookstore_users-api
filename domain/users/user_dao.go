@@ -13,6 +13,7 @@ const (
 	queryGetUser    = "SELECT * FROM users where id=?;"
 	queryGetAllUser = "SELECT * FROM users;"
 	queryUpdateUser = "UPDATE users SET first_name=?, last_name=?, email=? where id=?;"
+	queryDeleteUser = "DELETE FROM users where id=?;"
 )
 
 var (
@@ -55,6 +56,21 @@ func GetAll() []User {
 	//}
 
 	return userList
+}
+
+func (user *User) Delete() *errors.RestError {
+	stmt, err := users_db.Client.Prepare(queryDeleteUser)
+	if err != nil {
+		return errors.NewInternalServerError(err.Error())
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(user.Id)
+	if err != nil {
+		return errors.NewInternalServerError(err.Error())
+	}
+	return nil
+
 }
 
 func (user *User) Get() *errors.RestError {
