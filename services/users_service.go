@@ -17,14 +17,8 @@ func CreateUser(user users.User) (*users.User, *errors.RestError) {
 }
 
 func DeleteUser(userId int64) *errors.RestError {
-	user, err := GetUser(userId)
-	if err != nil {
-		return err
-	}
-	if err := user.Delete(); err != nil {
-		return err
-	}
-	return nil
+	user := users.User{Id: userId}
+	return user.Delete()
 }
 
 func GetUser(userId int64) (*users.User, *errors.RestError) {
