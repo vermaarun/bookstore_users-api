@@ -1,6 +1,7 @@
 package users
 
 import (
+	"fmt"
 	"github.com/vermaarun/bookstore_users-api/datasources/mysql/users_db"
 	"github.com/vermaarun/bookstore_users-api/utils/date_time"
 	"github.com/vermaarun/bookstore_users-api/utils/errors"
@@ -8,17 +9,48 @@ import (
 )
 
 const (
-	errorNoRows     = "no rows in result set"
-	queryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES(?, ?, ?, ?);"
-	queryGetUser    = "SELECT * FROM users where id=?;"
-	queryGetAllUser = "SELECT * FROM users;"
-	queryUpdateUser = "UPDATE users SET first_name=?, last_name=?, email=? where id=?;"
-	queryDeleteUser = "DELETE FROM users where id=?;"
+	errorNoRows           = "no rows in result set"
+	queryInsertUser       = "INSERT INTO users(first_name, last_name, email, date_created, status, password) VALUES(?, ?, ?, ?, ?, ?);"
+	queryGetUser          = "SELECT id, first_name, last_name, email, date_created, status FROM users where id=?;"
+	queryGetAllUser       = "SELECT id, first_name, last_name, email, date_created, status FROM users;"
+	queryUpdateUser       = "UPDATE users SET first_name=?, last_name=?, email=? where id=?;"
+	queryDeleteUser       = "DELETE FROM users where id=?;"
+	queryFindUserByStatus = "SELECT id, first_name, last_name, email, date_created, status FROM users where status=?;"
 )
 
 var (
 	usersDb = make(map[int64]*User)
 )
+
+func (user *User) FindByStatus(status string) ([]User, *errors.RestError) {
+	stmt, err := users_db.Client.Prepare(queryFindUserByStatus)
+	if err != nil {
+		return nil, errors.NewInternalServerError(err.Error())
+	}
+	defer stmt.Close()
+	rows, err := stmt.Query(status)
+	if err != nil {
+		return nil, errors.NewInternalServerError(err.Error())
+	}
+	defer rows.Close()
+
+	var userList []User
+
+	// iterate over rows
+	for rows.Next() {
+		// scan row
+		var user User
+		err = rows.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreate, &user.Status)
+		if err != nil {
+			return nil, errors.NewInternalServerError(err.Error())
+		}
+		userList = append(userList, user)
+	}
+	if len(userList) == 0 {
+		return nil, errors.NewNotFoundError(fmt.Sprintf("No user matches status %s", status))
+	}
+	return userList, nil
+}
 
 func GetAll() []User {
 
@@ -32,13 +64,14 @@ func GetAll() []User {
 	if err != nil {
 		panic(err)
 	}
+	defer getResults.Close()
 	var userList []User
 	var user = User{}
 
 	// iterate over rows
 	for getResults.Next() {
 		// scan row
-		err = getResults.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreate)
+		err = getResults.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreate, &user.Status)
 		if err != nil {
 			panic(err)
 		}
@@ -80,7 +113,7 @@ func (user *User) Get() *errors.RestError {
 	}
 	defer stmt.Close()
 	getResult := stmt.QueryRow(user.Id)
-	if err = getResult.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreate); err != nil {
+	if err = getResult.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreate, &user.Status); err != nil {
 		if strings.Contains(err.Error(), errorNoRows) {
 			return errors.NewNotFoundError(err.Error())
 		}
@@ -98,8 +131,9 @@ func (user *User) Save() *errors.RestError {
 	defer stmt.Close()
 
 	user.DateCreate = date_time.GetNowString()
+	user.Status = userStatusActive
 
-	insertResult, err := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreate)
+	insertResult, err := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreate, user.Status, user.Password)
 	if err != nil {
 		return errors.NewInternalServerError(err.Error())
 	}

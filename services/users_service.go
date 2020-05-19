@@ -6,7 +6,6 @@ import (
 )
 
 func CreateUser(user users.User) (*users.User, *errors.RestError) {
-	// TODO: implement me
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
@@ -58,4 +57,9 @@ func UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestError
 
 func GetAllUser() []users.User {
 	return users.GetAll()
+}
+
+func Search(status string) ([]users.User, *errors.RestError){
+	dao := &users.User{}
+	return dao.FindByStatus(status)
 }
