@@ -2,6 +2,8 @@ package services
 
 import (
 	"github.com/vermaarun/bookstore_users-api/domain/users"
+	"github.com/vermaarun/bookstore_users-api/utils/crypto_utils"
+	"github.com/vermaarun/bookstore_users-api/utils/date_time"
 	"github.com/vermaarun/bookstore_users-api/utils/errors"
 )
 
@@ -9,6 +11,10 @@ func CreateUser(user users.User) (*users.User, *errors.RestError) {
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
+
+	user.DateCreate = date_time.GetNowString()
+	user.Status = users.UserStatusActive
+	user.Password = crypto_utils.GetMd5(user.Password)
 	if err := user.Save(); err != nil {
 		return nil, err
 	}
@@ -55,11 +61,11 @@ func UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestError
 	return current, nil
 }
 
-func GetAllUser() []users.User {
+func GetAllUser() users.Users {
 	return users.GetAll()
 }
 
-func Search(status string) ([]users.User, *errors.RestError){
+func Search(status string) (users.Users, *errors.RestError){
 	dao := &users.User{}
 	return dao.FindByStatus(status)
 }

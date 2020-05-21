@@ -3,7 +3,6 @@ package users
 import (
 	"fmt"
 	"github.com/vermaarun/bookstore_users-api/datasources/mysql/users_db"
-	"github.com/vermaarun/bookstore_users-api/utils/date_time"
 	"github.com/vermaarun/bookstore_users-api/utils/errors"
 	"strings"
 )
@@ -129,9 +128,6 @@ func (user *User) Save() *errors.RestError {
 	}
 	// tell compiler to close statement before return
 	defer stmt.Close()
-
-	user.DateCreate = date_time.GetNowString()
-	user.Status = userStatusActive
 
 	insertResult, err := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreate, user.Status, user.Password)
 	if err != nil {
