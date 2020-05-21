@@ -3,6 +3,7 @@ package users
 import (
 	"fmt"
 	"github.com/vermaarun/bookstore_users-api/datasources/mysql/users_db"
+	"github.com/vermaarun/bookstore_users-api/logger"
 	"github.com/vermaarun/bookstore_users-api/utils/errors"
 	"strings"
 )
@@ -24,7 +25,8 @@ var (
 func (user *User) FindByStatus(status string) ([]User, *errors.RestError) {
 	stmt, err := users_db.Client.Prepare(queryFindUserByStatus)
 	if err != nil {
-		return nil, errors.NewInternalServerError(err.Error())
+		logger.Error("error when trying to prepare find statement", err)
+		return nil, errors.NewInternalServerError("database error")
 	}
 	defer stmt.Close()
 	rows, err := stmt.Query(status)
@@ -77,23 +79,14 @@ func GetAll() []User {
 		userList = append(userList, user)
 	}
 
-	//for _, user := range usersDb {
-	//	userList = append(userList, User{
-	//		Id:         user.Id,
-	//		FirstName:  user.FirstName,
-	//		LastName:   user.LastName,
-	//		Email:      user.Email,
-	//		DateCreate: user.DateCreate,
-	//	})
-	//}
-
 	return userList
 }
 
 func (user *User) Delete() *errors.RestError {
 	stmt, err := users_db.Client.Prepare(queryDeleteUser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		logger.Error("error when trying to prepare delete statement", err)
+		return errors.NewInternalServerError("database error")
 	}
 	defer stmt.Close()
 
@@ -108,7 +101,8 @@ func (user *User) Delete() *errors.RestError {
 func (user *User) Get() *errors.RestError {
 	stmt, err := users_db.Client.Prepare(queryGetUser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		logger.Error("error when trying to prepare get statement", err)
+		return errors.NewInternalServerError("database error")
 	}
 	defer stmt.Close()
 	getResult := stmt.QueryRow(user.Id)
@@ -116,7 +110,8 @@ func (user *User) Get() *errors.RestError {
 		if strings.Contains(err.Error(), errorNoRows) {
 			return errors.NewNotFoundError(err.Error())
 		}
-		return errors.NewInternalServerError(err.Error())
+		logger.Error("error when trying to get user by id", err)
+		return errors.NewInternalServerError("database error")
 	}
 	return nil
 }
@@ -124,7 +119,8 @@ func (user *User) Get() *errors.RestError {
 func (user *User) Save() *errors.RestError {
 	stmt, err := users_db.Client.Prepare(queryInsertUser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		logger.Error("error when trying to prepare save statement", err)
+		return errors.NewInternalServerError("database error")
 	}
 	// tell compiler to close statement before return
 	defer stmt.Close()
@@ -144,7 +140,8 @@ func (user *User) Save() *errors.RestError {
 func (user *User) Update() *errors.RestError {
 	stmt, err := users_db.Client.Prepare(queryUpdateUser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		logger.Error("error when trying to prepare update statement", err)
+		return errors.NewInternalServerError("database error")
 	}
 	defer stmt.Close()
 	_, err = stmt.Exec(user.FirstName, user.LastName, user.Email, user.Id)
