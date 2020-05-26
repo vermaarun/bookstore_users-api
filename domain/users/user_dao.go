@@ -9,13 +9,14 @@ import (
 )
 
 const (
-	errorNoRows           = "no rows in result set"
-	queryInsertUser       = "INSERT INTO users(first_name, last_name, email, date_created, status, password) VALUES(?, ?, ?, ?, ?, ?);"
-	queryGetUser          = "SELECT id, first_name, last_name, email, date_created, status FROM users where id=?;"
-	queryGetAllUser       = "SELECT id, first_name, last_name, email, date_created, status FROM users;"
-	queryUpdateUser       = "UPDATE users SET first_name=?, last_name=?, email=? where id=?;"
-	queryDeleteUser       = "DELETE FROM users where id=?;"
-	queryFindUserByStatus = "SELECT id, first_name, last_name, email, date_created, status FROM users where status=?;"
+	errorNoRows                 = "no rows in result set"
+	queryInsertUser             = "INSERT INTO users(first_name, last_name, email, date_created, status, password) VALUES(?, ?, ?, ?, ?, ?);"
+	queryGetUser                = "SELECT id, first_name, last_name, email, date_created, status FROM users where id=?;"
+	queryGetAllUser             = "SELECT id, first_name, last_name, email, date_created, status FROM users;"
+	queryUpdateUser             = "UPDATE users SET first_name=?, last_name=?, email=? where id=?;"
+	queryDeleteUser             = "DELETE FROM users where id=?;"
+	queryFindByStatus           = "SELECT id, first_name, last_name, email, date_created, status FROM users where status=?;"
+	queryFindByEmailAndPassword = "SELECT id, first_name, last_name, email, date_created, status FROM users where email=? AND password=? AND status=?;"
 )
 
 var (
@@ -23,7 +24,7 @@ var (
 )
 
 func (user *User) FindByStatus(status string) ([]User, *errors.RestError) {
-	stmt, err := users_db.Client.Prepare(queryFindUserByStatus)
+	stmt, err := users_db.Client.Prepare(queryFindByStatus)
 	if err != nil {
 		logger.Error("error when trying to prepare find statement", err)
 		return nil, errors.NewInternalServerError("database error")
@@ -147,6 +148,24 @@ func (user *User) Update() *errors.RestError {
 	_, err = stmt.Exec(user.FirstName, user.LastName, user.Email, user.Id)
 	if err != nil {
 		return errors.NewInternalServerError(err.Error())
+	}
+	return nil
+}
+
+func (user *User) FindByEmailAndPassword() *errors.RestError {
+	stmt, err := users_db.Client.Prepare(queryFindByEmailAndPassword)
+	if err != nil {
+		logger.Error("error when trying to prepare find by email and password statement", err)
+		return errors.NewInternalServerError("database error")
+	}
+	defer stmt.Close()
+	getResult := stmt.QueryRow(user.Email, user.Password, UserStatusActive)
+	if err = getResult.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreate, &user.Status); err != nil {
+		if strings.Contains(err.Error(), errorNoRows) {
+			return errors.NewNotFoundError("Invalid user credentials")
+		}
+		logger.Error("error when trying to find user by email and password", err)
+		return errors.NewInternalServerError("database error")
 	}
 	return nil
 }
